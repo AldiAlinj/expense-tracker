@@ -1,20 +1,18 @@
+import CreateSubscriptionModal from "@/components/CreateSubscriptionModal";
 import ListHeading from "@/components/ListHeading";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import UpcomingSubscriptionCard from "@/components/UpcomingSubscriptionCard";
-import {
-  HOME_BALANCE,
-  HOME_SUBSCRIPTIONS,
-  UPCOMING_SUBSCRIPTIONS,
-} from "@/constants/data";
+import { HOME_BALANCE, UPCOMING_SUBSCRIPTIONS } from "@/constants/data";
 import { icons } from "@/constants/icons";
 import images from "@/constants/images";
+import { useSubscriptions } from "@/context/SubscriptionsContext";
 import "@/global.css";
 import { formatCurrency } from "@/lib/utils";
 import { useUser } from "@clerk/expo";
 import dayjs from "dayjs";
 import { styled } from "nativewind";
 import { useState } from "react";
-import { FlatList, Image, Text, View } from "react-native";
+import { FlatList, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 const SafeAreaView = styled(RNSafeAreaView);
@@ -23,6 +21,8 @@ export default function App() {
   const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<
     string | null
   >(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const { subscriptions, addSubscription } = useSubscriptions();
   const { user } = useUser();
 
   const userEmail =
@@ -37,7 +37,7 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1  bg-background p-5">
       <FlatList
-        data={HOME_SUBSCRIPTIONS}
+        data={subscriptions}
         ListHeaderComponent={
           <>
             <View className="home-header">
@@ -47,7 +47,9 @@ export default function App() {
                   {userEmail}
                 </Text>
               </View>
-              <Image source={icons.add} className="home-add-icon" />
+              <Pressable onPress={() => setModalVisible(true)}>
+                <Image source={icons.add} className="home-add-icon" />
+              </Pressable>
             </View>
             <View className="home-balance-card">
               <Text className="home-balance-label">Balance</Text>
@@ -99,6 +101,14 @@ export default function App() {
           <Text className="home-empty-state">No subscriptions found</Text>
         }
         contentContainerClassName="pb-30"
+      />
+      <CreateSubscriptionModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={(newSub) => {
+          addSubscription(newSub);
+          setModalVisible(false);
+        }}
       />
     </SafeAreaView>
   );
