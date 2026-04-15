@@ -5,7 +5,9 @@ import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Ignore if called more than once during fast refresh.
+});
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -14,7 +16,7 @@ if (!publishableKey) {
 }
 
 function RootLayoutContent() {
-    const {isLoaded: authLoaded} = useAuth();
+  const { isLoaded: authLoaded } = useAuth();
   const [fontsLoaded] = useFonts({
     "sans-regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
     "sans-medium": require("../assets/fonts/PlusJakartaSans-Medium.ttf"),
@@ -26,9 +28,11 @@ function RootLayoutContent() {
 
   useEffect(() => {
     if (fontsLoaded && authLoaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore hide race conditions during reloads.
+      });
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, authLoaded]);
 
   if (!fontsLoaded || !authLoaded) {
     return null;
@@ -36,10 +40,7 @@ function RootLayoutContent() {
   return <Stack screenOptions={{ headerShown: false }} />;
 }
 
-
 export default function RootLayout() {
-
-  
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <RootLayoutContent />
